@@ -1,0 +1,93 @@
+#!/usr/bin/env bash
+#################################################################
+# Author : Abner Benedito
+# Version: 1.0
+# License: 0-BSD
+#################################################################
+
+#################################################################
+# Configs
+#################################################################
+
+#declare BASHPACKAGER="${HOME}/.local/share/bashpackager"
+#declare BASHPACKAGERLIBS="${BASHPACKAGER}/libs"
+#: "${BASHPACKAGERPATH:=$BASHPACKAGERLIBS}"
+
+declare BASHPACKAGER="./bashpackager"
+declare BASHPACKAGERLIBS="${BASHPACKAGER}/libs"
+: "${BASHPACKAGERPATH:=$BASHPACKAGERLIBS}"
+
+declare -i TRUE=0
+declare -i FALSE=1
+declare -i ERROR=2
+
+#################################################################
+# bashpackager
+#################################################################
+
+function __msg { printf '%b\n' "$*" 2>/dev/null; }
+
+function __error
+{
+	local message="$@"
+
+	__msg "\e[1;31mfatal error\e[m: $message"
+	exit "$ERROR"
+}
+
+function __display_usage
+{
+	local text
+
+	read -rd '' text <<'EOF'
+$0: usage: $0 [SCRIPT]
+EOF
+	__msg "$text"
+
+	exit "$TRUE"
+}
+
+function import
+{
+	# import a script based on BASHPACKAGERPATH
+	local module="$1"
+	local old_ifs="$IFS"
+	local path _path
+	local path_count import_error_count
+
+	declare -i import_error_count=0
+	declare -a path
+
+	IFS=':' read -ra path <<< "$BASHPACKAGERPATH"
+	IFS="$old_ifs"
+
+	declare -i path_count="${#path[@]}"
+
+	for _path in "${path[@]}"
+	{
+		[[ -d "$_path/$module" ]] ||
+		{
+			import_error_count+=1
+			continue
+		}
+
+		[[ -e "$_path/$module/bp_main" ]] ||
+		{
+			__error "-- $SCRIPTNAME: \"bp_main\" not found in module \"$module\"."
+		}
+
+		source "$_path/$module/bp_main" && break
+	}
+
+	((import_error_count == path_count)) &&
+		__error "-- $SCRIPTNAME: module \"$module\" not found."
+}
+
+(($# == 0)) && __display_usage
+
+if [[ -f "$1" ]]; then
+	declare SCRIPTNAME="$1"
+	source "$1"
+else
+	__error "$1 not exists."
+fi
