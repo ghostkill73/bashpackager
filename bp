@@ -5,6 +5,8 @@
 # License: 0-BSD
 #################################################################
 
+# shellcheck disable=SC1090
+
 #################################################################
 # Configs
 #################################################################
@@ -13,8 +15,8 @@
 #declare BASHPACKAGERLIBS="${BASHPACKAGER}/libs"
 #: "${BASHPACKAGERPATH:=$BASHPACKAGERLIBS}"
 
-declare BASHPACKAGER="./bashpackager"
-declare BASHPACKAGERLIBS="${BASHPACKAGER}/libs"
+declare -- BASHPACKAGER="./bashpackager"
+declare -- BASHPACKAGERLIBS="${BASHPACKAGER}/libs"
 : "${BASHPACKAGERPATH:=$BASHPACKAGERLIBS}"
 
 declare -i TRUE=0
@@ -25,11 +27,11 @@ declare -i ERROR=2
 # bashpackager
 #################################################################
 
-function __msg { printf '%b\n' "$*" 2>/dev/null; }
+function __msg { printf '%b\n' "$*" >&2; }
 
 function __error
 {
-	local message="$@"
+	local message="$*"
 
 	__msg "\e[1;31mfatal error\e[m: $message"
 	exit "$ERROR"

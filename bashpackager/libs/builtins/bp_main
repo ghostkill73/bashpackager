@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 
-declare BPLIB="$BASHPACKAGERLIBS/builtins"
+# shellcheck disable=SC1090
+# shellcheck disable=SC1091
+
+declare -- BPLIB="$BASHPACKAGERLIBS/builtins"
 
 source "$BPLIB/builtins.sh"

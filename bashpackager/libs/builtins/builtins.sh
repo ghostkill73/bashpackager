@@ -3,15 +3,20 @@
 #
 # bashpackager builtin functions
 #
+# VERSION: 1.0
+# LICENSE: 0-BSD
+#
 ###########################################################
 
+###########################################################
+# builtins
 ###########################################################
 
 function msg
 {
 	# usage  : msg "example"
 	# returns: example
-	local message="$@"
+	local message="$*"
 
 	printf '%b\n' "$message" >&2
 }
@@ -30,10 +35,15 @@ function trim_string_all
 {
 	# usage  : trim_string_all "   example   string    "
 	# returns: example string
+	local SAVED_OPT_F
+
+	[[ $- = *f* ]]; declare -i SAVED_OPT_F=$?
 	set -f
+
 	set -- $*
 	printf '%s\n' "$*"
-	set +f
+
+	(( SAVED_OPT_F == 0 )) && set +f
 }
 
 function strip_all
@@ -95,4 +105,11 @@ function reverse_case
 	local string="$*"
 
 	printf '%s\n' "${string~~}"
+}
+
+function pass
+{
+	# usage : pass
+	# returns: status 0
+	return 0
 }
