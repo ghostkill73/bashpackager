@@ -1,0 +1,10 @@
+{
+  "setup": {
+    "name": "bashpackager.sh",
+    "version": "1.0.0",
+    "description": "bashpackager base"
+  },
+  "libs": [
+    "builtins"
+  ]
+}

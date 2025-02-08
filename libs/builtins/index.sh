@@ -12,8 +12,7 @@
 # builtins
 ###########################################################
 
-function msg
-{
+function msg() {
 	# usage  : msg "example"
 	# returns: example
 	local message="$*"
@@ -21,8 +20,7 @@ function msg
 	printf '%b\n' "$message" >&2
 }
 
-function trim_string
-{
+function trim_string() {
 	# usage  : trim_string "   example   string    "
 	# returns: example   string
 	: "${1#"${1%%[![:space:]]*}"}"
@@ -31,8 +29,7 @@ function trim_string
 }
 
 # shellcheck disable=SC2086,SC2048
-function trim_string_all
-{
+function trim_string_all() {
 	# usage  : trim_string_all "   example   string    "
 	# returns: example string
 	local SAVED_OPT_F
@@ -46,8 +43,7 @@ function trim_string_all
 	(( SAVED_OPT_F == 0 )) && set +f
 }
 
-function strip_all
-{
+function strip_all() {
 	# usage: strip_all "string" "pattern"
 	local string="$1"
 	local pattern="$2"
@@ -55,8 +51,7 @@ function strip_all
 	printf '%s\n' "${string//$pattern}"
 }
 
-function regex
-{
+function regex() {
 	# usage: regex "string" "regex"
 	local text="$1"
 	local compile="$2"
@@ -64,15 +59,12 @@ function regex
 	[[ $text =~ $compile ]] && printf '%s\n' "${BASH_REMATCH[1]}"
 }
 
-function split
-{
+function split() {
 	# usage: split "string" "delimiter"
 	local string="$1"
 	local delimiter="$2"
 	local old_ifs="$IFS"
-	local arr
-
-	declare -a arr
+	local -a arr
 
 	IFS=$'\n' read -d "" -ra arr <<< "${string//$delimiter/$'\n'}"
 	IFS="$old_ifs"
@@ -80,8 +72,7 @@ function split
 	printf '%s\n' "${arr[@]}"
 }
 
-function lower_case
-{
+function lower_case() {
 	# usage  : lower "STRING"
 	# returns: string
 	local string="$*"
@@ -89,8 +80,7 @@ function lower_case
 	printf '%s\n' "${string,,}"
 }
 
-function upper_case
-{
+function upper_case() {
 	# usage  : upper "string"
 	# returns: STRING
 	local string="$*"
@@ -98,8 +88,7 @@ function upper_case
 	printf '%s\n' "${string^^}"
 }
 
-function reverse_case
-{
+function reverse_case() {
 	# usage  : reverse_case "String"
 	# returns: sTRING
 	local string="$*"
@@ -107,9 +96,8 @@ function reverse_case
 	printf '%s\n' "${string~~}"
 }
 
-function pass
-{
-	# usage : pass
+function pass() {
+	# usage  : pass
 	# returns: status 0
 	return 0
 }

@@ -5,91 +5,98 @@
 # License: 0-BSD
 #################################################################
 
-# shellcheck disable=SC1090
+# shellcheck disable=SC1090,SC2155
 
 #################################################################
 # Configs
 #################################################################
 
-#declare BASHPACKAGER="${HOME}/.local/share/bashpackager"
-#declare BASHPACKAGERLIBS="${BASHPACKAGER}/libs"
-#: "${BASHPACKAGERPATH:=$BASHPACKAGERLIBS}"
+declare -- __ROOT_PATH__="$PWD"
+declare -- __SETUP_FILE__="${__ROOT_PATH__}/package.json"
 
-declare -- BASHPACKAGER="./bashpackager"
-declare -- BASHPACKAGERLIBS="${BASHPACKAGER}/libs"
-: "${BASHPACKAGERPATH:=$BASHPACKAGERLIBS}"
 
-declare -i TRUE=0
-declare -i FALSE=1
-declare -i ERROR=2
+# testing package.json
+jq '.' 
+
+declare -- __SCRIPT_NAME__="$(jq '.setup.name' package.json)"
+declare -- __SCRIPT_VERSION__="$(jq '.setup.version' package.json)"
+declare -- __SCRIPT_DESC__="$(jq '.setup.description' package.json)"
 
 #################################################################
 # bashpackager
 #################################################################
 
-function __msg { printf '%b\n' "$*" >&2; }
+echo "$__SCRIPT_NAME__"
+echo "$__SCRIPT_VERSION__"
+echo "$__SCRIPT_DESC__"
 
-function __error
-{
-	local message="$*"
+# function __msg() { printf '%b\n' "$*" >&2; }
 
-	__msg "\e[1;31mfatal error\e[m: $message"
-	exit "$ERROR"
-}
+# function __error() {
+# 	local message="$*"
 
-function __display_usage
-{
-	local text
+# 	__msg "\e[1;31mfatal error\e[m: $message"
+# 	exit "$ERROR"
+# }
 
-	read -rd '' text <<'EOF'
-$0: usage: $0 [SCRIPT]
-EOF
-	__msg "$text"
+# function __display_usage() {
+# 	local text
 
-	exit "$TRUE"
-}
+# 	read -rd '' text <<'EOF'
+# $0: usage: $0 [SCRIPT]
+# EOF
+# 	__msg "$text"
 
-function import
-{
-	# import a script based on BASHPACKAGERPATH
-	local module="$1"
-	local old_ifs="$IFS"
-	local path _path
-	local path_count import_error_count
+# 	exit "$TRUE"
+# }
 
-	declare -i import_error_count=0
-	declare -a path
+# function import() {
+	
+# }
 
-	IFS=':' read -ra path <<< "$BASHPACKAGERPATH"
-	IFS="$old_ifs"
 
-	declare -i path_count="${#path[@]}"
 
-	for _path in "${path[@]}"
-	{
-		[[ -d "$_path/$module" ]] ||
-		{
-			import_error_count+=1
-			continue
-		}
+# function import
+# {
+# 	# import a script based on BASHPACKAGERPATH
+# 	local module="$1"
+# 	local old_ifs="$IFS"
+# 	local path _path
+# 	local path_count import_error_count
 
-		[[ -e "$_path/$module/bp_main" ]] ||
-		{
-			__error "-- $SCRIPTNAME: \"bp_main\" not found in module \"$module\"."
-		}
+# 	declare -i import_error_count=0
+# 	declare -a path
 
-		source "$_path/$module/bp_main" && break
-	}
+# 	IFS=':' read -ra path <<< "$BASHPACKAGERPATH"
+# 	IFS="$old_ifs"
 
-	((import_error_count == path_count)) &&
-		__error "-- $SCRIPTNAME: module \"$module\" not found."
-}
+# 	declare -i path_count="${#path[@]}"
 
-(($# == 0)) && __display_usage
+# 	for _path in "${path[@]}"
+# 	{
+# 		[[ -d "$_path/$module" ]] ||
+# 		{
+# 			import_error_count+=1
+# 			continue
+# 		}
 
-if [[ -f "$1" ]]; then
-	declare SCRIPTNAME="$1"
-	source "$1"
-else
-	__error "$1 not exists."
-fi
+# 		[[ -e "$_path/$module/bp_main" ]] ||
+# 		{
+# 			__error "-- $SCRIPTNAME: \"bp_main\" not found in module \"$module\"."
+# 		}
+
+# 		source "$_path/$module/bp_main" && break
+# 	}
+
+# 	((import_error_count == path_count)) &&
+# 		__error "-- $SCRIPTNAME: module \"$module\" not found."
+# }
+
+# (($# == 0)) && __display_usage
+
+# if [[ -f "$1" ]]; then
+# 	declare SCRIPTNAME="$1"
+# 	source "$1"
+# else
+# 	__error "$1 not exists."
+# fi
