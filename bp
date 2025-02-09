@@ -5,73 +5,105 @@
 # License: 0-BSD
 #################################################################
 
-# shellcheck disable=SC1090,SC2155
-
 #################################################################
 # Configs
 #################################################################
 
+declare -i TRUE=0 # exit status for success.
+declare -i FALSE=1 # exit status for recognized error."
+declare -i ERROR=2 # exit status for not recognized error."
+
+case "$BASH_VERSION" in
+    [4-9].*) : ;; # pass
+    *)
+        printf '\e[1;31merror:\e[m Bash version >=4.0 required, but you have %s\n' "$BASH_VERSION"
+        exit $FALSE
+    ;;
+esac
+
 declare -- __SETUP_PWD__="$PWD"
-declare -- __SETUP_FILE__="${__SETUP_PWD__}/setup.cfg"
+declare -- __SETUP_FILENAME__="setup.cfg"
+declare -- __SETUP_FILE__="${__SETUP_PWD__}/${__SETUP_FILENAME__}"
 
 #################################################################
-# bashpackager
+# Utils
 #################################################################
 
-function __getConfigValues() {
-    local line type parameter
-    declare -g __SCRIPT_NAME__ __SCRIPT_VERSION__ __SCRIPT_DESC__
+function __Message() {
+    local content="$*"
 
-    while read -r line; do
-        [[ "${line}" = "#"* ]] && continue
-
-        type="${line%%:*}"
-        : "${line##*:}"
-        parameter="${_%%;*}"
-
-        case "$type" in
-            'name') __SCRIPT_NAME__="$parameter" ;;
-            'version') __SCRIPT_VERSION__="$parameter" ;;
-            'desc') __SCRIPT_DESC__="$parameter" ;;
-            'source') __SCRIPT_SOURCE__="$parameter" ;;
-            *) echo "$line" ;;
-        esac
-    done < "$__SETUP_FILE__"
+    printf '%b\n' "$content" >&2
 }
 
-__getConfigValues
-echo $__SETUP_FILE__
+function __FatalError() {
+    local errorMessage="$*"
+
+    __Message "\e[1;31mfatal error:\e[m $errorMessage"
+
+}
+
+function __Regex() {
+    local text="$1"
+    local compile="$2"
+
+    [[ $text =~ $compile ]]
+}
+
+#################################################################
+# main
+#################################################################
+
+
+function __GetConfigValues() {
+    local -a setupFileLine
+    local -a ___INVALID_CONFIG
+
+    declare -g __SCRIPT_NAME__ __SCRIPT_VERSION__ __SCRIPT_DESC__
+    
+    # reading setup file
+    while IFS= read -r readLine; do
+        [[ -z "$readLine" ]] && continue
+        setupFileLine+=("$readLine")
+    done < "$__SETUP_FILE__"
+
+    for line in "${setupFileLine[@]}"; {
+        case "${line,,}" in
+            'name'*)
+                __Regex "$line" "name:\\s+(.+)[,]"
+                __SCRIPT_NAME__="${BASH_REMATCH[1]}"
+            ;;
+            'version'*)
+                __Regex "$line" "version:\\s+(.+)[,]"
+                __SCRIPT_VERSION__="${BASH_REMATCH[1]}"
+            ;;
+            'desc'*)
+                __Regex "$line" "desc:\\s+(.+)[,]"
+                __SCRIPT_DESC__="${BASH_REMATCH[1]}"
+            ;;
+            '#'*) : ;; # comments
+            *)
+                ___INVALID_CONFIG+=("$line")
+            ;;
+        esac
+
+        # resetting BASH_REMATCH value
+        [[ "${null:=}" =~ '' ]] || :
+    }
+
+    # error for invalid options
+    (( ${#___INVALID_CONFIG[@]} > 0 )) && {
+        __FatalError "The following options in ${__SETUP_FILENAME__} are not valid:"
+        for _invalid in "${___INVALID_CONFIG[@]}"; {
+            __Message " -- $_invalid"
+        }
+        exit $FALSE
+    }
+}
+
+__GetConfigValues
 echo $__SCRIPT_NAME__
 echo $__SCRIPT_VERSION__
 echo $__SCRIPT_DESC__
-echo $__SCRIPT_SOURCE__
-echo ${BASH_SOURCE[@]}
-
-# function __msg() { printf '%b\n' "$*" >&2; }
-
-# function __error() {
-# 	local message="$*"
-
-# 	__msg "\e[1;31mfatal error\e[m: $message"
-# 	exit "$ERROR"
-# }
-
-# function __display_usage() {
-# 	local text
-
-# 	read -rd '' text <<'EOF'
-# $0: usage: $0 [SCRIPT]
-# EOF
-# 	__msg "$text"
-
-# 	exit "$TRUE"
-# }
-
-# function import() {
-	
-# }
-
-
 
 # function import
 # {
