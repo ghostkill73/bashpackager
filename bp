@@ -49,55 +49,54 @@ function __Regex() {
     [[ $text =~ $compile ]]
 }
 
+function __Split() {
+	local string="$1"
+	local delimiter="$2"
+	local old_ifs="$IFS"
+	local -a arr
+
+	IFS=$'\n' read -d "" -ra arr <<< "${string//$delimiter/$'\n'}"
+	IFS="$old_ifs"
+
+	printf '%s\n' "${arr[@]}"
+}
+
+
 #################################################################
 # main
 #################################################################
 
+function __GetValueFromSetupFile() {
+    local configName="$1"
+    local break=";;"
+
+    __Regex "$(<"$__SETUP_FILE__")" "${configName}:\\s+([^;]+)\\s*${break}"
+    declare -Ag __getValueFromSetupFile["$configName"]="${BASH_REMATCH[1]}"
+}
 
 function __GetConfigValues() {
-    local -a setupFileLine
-    local -a ___INVALID_CONFIG
-
     declare -g __SCRIPT_NAME__ __SCRIPT_VERSION__ __SCRIPT_DESC__
+    local -a invalidConfig
+    local -i i
     
-    # reading setup file
-    while IFS= read -r readLine; do
-        [[ -z "$readLine" ]] && continue
-        setupFileLine+=("$readLine")
-    done < "$__SETUP_FILE__"
+    __GetValueFromSetupFile name
+    __GetValueFromSetupFile version
+    __GetValueFromSetupFile desc
 
-    for line in "${setupFileLine[@]}"; {
-        case "${line,,}" in
-            'name'*)
-                __Regex "$line" "name:\\s+(.+)[,]"
-                __SCRIPT_NAME__="${BASH_REMATCH[1]}"
-            ;;
-            'version'*)
-                __Regex "$line" "version:\\s+(.+)[,]"
-                __SCRIPT_VERSION__="${BASH_REMATCH[1]}"
-            ;;
-            'desc'*)
-                __Regex "$line" "desc:\\s+(.+)[,]"
-                __SCRIPT_DESC__="${BASH_REMATCH[1]}"
-            ;;
-            '#'*) : ;; # comments
-            *)
-                ___INVALID_CONFIG+=("$line")
-            ;;
-        esac
+    __SCRIPT_NAME__="${__getValueFromSetupFile[name]}" 
+    __SCRIPT_VERSION__="${__getValueFromSetupFile[version]}"
+    __SCRIPT_DESC__="${__getValueFromSetupFile[desc]}"
 
-        # resetting BASH_REMATCH value
-        [[ "${null:=}" =~ '' ]] || :
-    }
-
-    # error for invalid options
-    (( ${#___INVALID_CONFIG[@]} > 0 )) && {
-        __FatalError "The following options in ${__SETUP_FILENAME__} are not valid:"
-        for _invalid in "${___INVALID_CONFIG[@]}"; {
-            __Message " -- $_invalid"
+    if [[ -n "$__SCRIPT_NAME__" ]]; then
+        i=0; for i in $(__Split "$__SCRIPT_NAME__" " "); {
+            i+=1
         }
-        exit $FALSE
-    }
+        echo $i
+
+        (( i = 1 )) && __FatalError "the name can contain only 1 argument."
+    else 
+        sadas
+    fi
 }
 
 __GetConfigValues
