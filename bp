@@ -9,142 +9,72 @@
 # Configs
 #################################################################
 
-declare -i TRUE=0 # exit status for success.
-declare -i FALSE=1 # exit status for recognized error."
-declare -i ERROR=2 # exit status for not recognized error."
-
 case "$BASH_VERSION" in
     [4-9].*) : ;; # pass
     *)
-        printf '\e[1;31merror:\e[m Bash version >=4.0 required, but you have %s\n' "$BASH_VERSION"
-        exit $FALSE
+        printf 'ERROR: Bash version >=4.0 required, but you have %s\n' "$BASH_VERSION"
+        exit 1
     ;;
 esac
-
-declare -- __SETUP_PWD__="$PWD"
-declare -- __SETUP_FILENAME__="setup.cfg"
-declare -- __SETUP_FILE__="${__SETUP_PWD__}/${__SETUP_FILENAME__}"
 
 #################################################################
 # Utils
 #################################################################
 
+function __SetConfigs() {
+    declare -ig TRUE=0 # exit status for success.
+    declare -ig FALSE=1 # exit status for recognized error."
+    declare -ig ERROR=2 # exit status for not recognized error."
+
+    declare -Ag BP_ENV[root-path]="$PWD"
+    declare -Ag BP_ENV[setup-filename]="setup.sh"
+    declare -Ag BP_ENV[setup-file]="${BP_ENV[root-path]}/${BP_ENV[setup-filename]}"
+}
+
 function __Message() {
     local content="$*"
-
     printf '%b\n' "$content" >&2
 }
 
 function __FatalError() {
     local errorMessage="$*"
-
     __Message "\e[1;31mfatal error:\e[m $errorMessage"
 
+    exit $FALSE
 }
 
-function __Regex() {
-    local text="$1"
-    local compile="$2"
+# shellcheck disable=SC2154,SC1090
+function __GetConfigValuesFromSetupFile() {
+    source "${BP_ENV[setup-file]}"
+    declare -Ag BP_ENV[project-name]="$project_name"
+    declare -Ag BP_ENV[project-version]="$version"
+    declare -Ag BP_ENV[project-desc]="$description"
+    unset name version description
 
-    [[ $text =~ $compile ]]
+    [[ -z "${BP_ENV[project-name]}" ]] &&
+        __FatalError "An error occurred while reading the value of 'project_name' in ${BP_ENV[setup-file]}."
+
+    [[ -z "${BP_ENV[project-version]}" ]] &&
+        __FatalError "An error occurred while reading the value of 'version' in ${BP_ENV[setup-file]}."
+
+    [[ -z "${BP_ENV[project-desc]}" ]] &&
+        __FatalError "An error occurred while reading the value of 'description' in ${BP_ENV[setup-file]}."
 }
 
-function __Split() {
-	local string="$1"
-	local delimiter="$2"
-	local old_ifs="$IFS"
-	local -a arr
-
-	IFS=$'\n' read -d "" -ra arr <<< "${string//$delimiter/$'\n'}"
-	IFS="$old_ifs"
-
-	printf '%s\n' "${arr[@]}"
-}
-
+function __LoadSetupConfigs() {
+    __SetConfigs
+    __GetConfigValuesFromSetupFile
+    echo ${BP_ENV[project-name]}
+    echo ${BP_ENV[project-version]}
+    echo ${BP_ENV[project-desc]}
+};
 
 #################################################################
 # main
 #################################################################
 
-function __GetValueFromSetupFile() {
-    local configName="$1"
-    local break=";;"
+function __Main() {
+    __LoadSetupConfigs
 
-    __Regex "$(<"$__SETUP_FILE__")" "${configName}:\\s+([^;]+)\\s*${break}"
-    declare -Ag __getValueFromSetupFile["$configName"]="${BASH_REMATCH[1]}"
-}
-
-function __GetConfigValues() {
-    declare -g __SCRIPT_NAME__ __SCRIPT_VERSION__ __SCRIPT_DESC__
-    local -a invalidConfig
-    local -i i
-    
-    __GetValueFromSetupFile name
-    __GetValueFromSetupFile version
-    __GetValueFromSetupFile desc
-
-    __SCRIPT_NAME__="${__getValueFromSetupFile[name]}" 
-    __SCRIPT_VERSION__="${__getValueFromSetupFile[version]}"
-    __SCRIPT_DESC__="${__getValueFromSetupFile[desc]}"
-
-    if [[ -n "$__SCRIPT_NAME__" ]]; then
-        i=0; for i in $(__Split "$__SCRIPT_NAME__" " "); {
-            i+=1
-        }
-        echo $i
-
-        (( i = 1 )) && __FatalError "the name can contain only 1 argument."
-    else 
-        sadas
-    fi
-}
-
-__GetConfigValues
-echo $__SCRIPT_NAME__
-echo $__SCRIPT_VERSION__
-echo $__SCRIPT_DESC__
-
-# function import
-# {
-# 	# import a script based on BASHPACKAGERPATH
-# 	local module="$1"
-# 	local old_ifs="$IFS"
-# 	local path _path
-# 	local path_count import_error_count
-
-# 	declare -i import_error_count=0
-# 	declare -a path
-
-# 	IFS=':' read -ra path <<< "$BASHPACKAGERPATH"
-# 	IFS="$old_ifs"
-
-# 	declare -i path_count="${#path[@]}"
-
-# 	for _path in "${path[@]}"
-# 	{
-# 		[[ -d "$_path/$module" ]] ||
-# 		{
-# 			import_error_count+=1
-# 			continue
-# 		}
-
-# 		[[ -e "$_path/$module/bp_main" ]] ||
-# 		{
-# 			__error "-- $SCRIPTNAME: \"bp_main\" not found in module \"$module\"."
-# 		}
-
-# 		source "$_path/$module/bp_main" && break
-# 	}
-
-# 	((import_error_count == path_count)) &&
-# 		__error "-- $SCRIPTNAME: module \"$module\" not found."
-# }
-
-# (($# == 0)) && __display_usage
-
-# if [[ -f "$1" ]]; then
-# 	declare SCRIPTNAME="$1"
-# 	source "$1"
-# else
-# 	__error "$1 not exists."
-# fi
+    exit $TRUE
+}; __Main
