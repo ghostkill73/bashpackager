@@ -9,6 +9,23 @@
 ###########################################################
 
 ###########################################################
+# bashpackager
+###########################################################
+
+# shellcheck disable=SC1090
+function import() {
+    local path="$1"
+
+    if [[ -e "${BP_ENV[modules]}/$path/main.sh" ]]; then
+        __ImportModule "$path"
+    elif [[ -e "${BP_ENV[project-src]}/$path" ]]; then
+        source "${BP_ENV[project-src]}/$path"
+    else
+       __FatalError "module '$path' not found."
+    fi
+}
+
+###########################################################
 # builtins
 ###########################################################
 
@@ -34,7 +51,7 @@ function trim_string_all() {
 	# returns: example string
 	local SAVED_OPT_F
 
-	[[ $- = *f* ]]; declare -i SAVED_OPT_F=$?
+	[[ $- == *f* ]]; declare -i SAVED_OPT_F=$?
 	set -f
 
 	set -- $*

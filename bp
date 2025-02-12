@@ -9,6 +9,8 @@
 # Configs
 #################################################################
 
+# shellcheck disable=SC1090,SC1091,SC2317
+
 case "$BASH_VERSION" in
     [4-9].*) : ;; # pass
     *)
@@ -20,16 +22,6 @@ esac
 #################################################################
 # Utils
 #################################################################
-
-function __SetConfigs() {
-    declare -ig TRUE=0 # exit status for success.
-    declare -ig FALSE=1 # exit status for recognized error."
-    declare -ig ERROR=2 # exit status for not recognized error."
-
-    declare -Ag BP_ENV[root-path]="$PWD"
-    declare -Ag BP_ENV[setup-filename]="setup.sh"
-    declare -Ag BP_ENV[setup-file]="${BP_ENV[root-path]}/${BP_ENV[setup-filename]}"
-}
 
 function __Message() {
     local content="$*"
@@ -43,7 +35,22 @@ function __FatalError() {
     exit $FALSE
 }
 
-# shellcheck disable=SC2154,SC1090
+# shellcheck disable=SC2034
+function __SetConfigs() {
+    declare -ig TRUE=0 # exit status for success.
+    declare -ig FALSE=1 # exit status for recognized error."
+    declare -ig ERROR=2 # exit status for not recognized error."
+
+    declare -Ag BP_ENV[root-path]="$PWD"
+    declare -Ag BP_ENV[setup-filename]="setup.sh"
+    declare -Ag BP_ENV[setup-file]="${BP_ENV[root-path]}/${BP_ENV[setup-filename]}"
+    declare -Ag BP_ENV[modules]="${BP_ENV[root-path]}/modules"
+    declare -g  BP_ENV[project-src]="${BP_ENV[root-path]}/src"
+
+    declare -ag BP_IMPORTS=()
+}
+
+# shellcheck disable=SC2154
 function __GetConfigValuesFromSetupFile() {
     source "${BP_ENV[setup-file]}"
     declare -Ag BP_ENV[project-name]="$project_name"
@@ -61,13 +68,36 @@ function __GetConfigValuesFromSetupFile() {
         __FatalError "An error occurred while reading the value of 'description' in ${BP_ENV[setup-file]}."
 }
 
+function __ImportModule() {
+    local moduleName="$1"
+    local package
+
+    # testing if alredy imported
+    for package in "${BP_IMPORTS[@]}"; {
+        [[ "$path" == "$package" ]] && return 0
+    }
+
+    # importing
+    source "${BP_ENV[modules]}/$moduleName/main.sh" # || error <----------------
+    BP_IMPORTS+=("$moduleName")
+}
+
+function __ImportBuiltinModules() {
+    local package
+
+    BP_IMPORTS+=(
+        '_builtins'
+    )
+    for package in "${BP_IMPORTS[@]}"; {
+        __ImportModule "$package"
+    }
+}
+
 function __LoadSetupConfigs() {
     __SetConfigs
     __GetConfigValuesFromSetupFile
-    echo ${BP_ENV[project-name]}
-    echo ${BP_ENV[project-version]}
-    echo ${BP_ENV[project-desc]}
-};
+    __ImportBuiltinModules
+}
 
 #################################################################
 # main
@@ -76,5 +106,8 @@ function __LoadSetupConfigs() {
 function __Main() {
     __LoadSetupConfigs
 
-    exit $TRUE
+    source "${BP_ENV[root-path]}/src/main.sh"
+    main
+
+    exit $?
 }; __Main
