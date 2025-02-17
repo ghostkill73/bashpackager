@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+#################################################################
+# Bashpackager
+#################################################################
+# shellcheck disable=SC1090,SC1091,SC2317
+
+# checking current bash version
+case "$BASH_VERSION" in
+    [4-9].*) : ;; # pass
+    *)
+        printf 'ERROR: Bash version >=4.0 required, but you have %s\n' "$BASH_VERSION"
+        exit 1
+    ;;
+esac
+
+#################################################################
+# Loading bp modules at modules/_bashpackager
+#################################################################
+
+declare -- __bp__modules__path__="$PWD/modules/_bashpackager"
+
+# utils
+source "$__bp__modules__path__/utils.sh"
+
+# configs
+source "$__bp__modules__path__/config.sh"
+
+# load
+source "$__bp__modules__path__/load.sh"
+
+__LoadBashpackager

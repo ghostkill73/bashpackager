@@ -1,18 +1,18 @@
 #!/bin/bash
 
 while :; do
-        clear
+	clear
 
-        time ( ./bp )
+	time { ./bp ; }
 
-        echo
+	echo
 
-        #read -n 1 -p "restart (R): " _user
+	read -r -n 1 -p "restart (R): " _user
 
-        #case ${_user,,} in
-        #        r) : ;;
-        #        *) break ;;
-        #esac
+	case ${_user,,} in
+		r) : ;;
+		*) break ;;
+	esac
 
 	sleep 1
 done
