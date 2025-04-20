@@ -19,17 +19,22 @@ function import() {
 		__ImportModule "$path"
     elif [[ -e "${BP_ENV[project-src]}/$path" ]]; then
 		source "${BP_ENV[project-src]}/$path"
+	elif [[ -e "$path" ]]; then
+		source "$path"
     else
 		__FatalError "module '$path' not found."
     fi
 }
 
+
 function msg() {
 	# usage  : msg "example"
 	# returns: example
-	local message="$*"
+	local message="$@"
+	local -i _s="$?"
 
 	printf '%b\n' "$message"
+	return "$_s"
 }
 
 function basename() {
