@@ -7,3 +7,4 @@ scripts/
 *.backup
 *~
 *.tmp
+*.swp
