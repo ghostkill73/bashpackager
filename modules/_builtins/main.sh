@@ -12,16 +12,15 @@
 # builtins
 ###########################################################
 
-# shellcheck disable=SC1090
 function import() {
     local path="$1"
 
     if [[ -e "${BP_ENV[modules]}/$path/main.sh" ]]; then
-        __ImportModule "$path"
+		__ImportModule "$path"
     elif [[ -e "${BP_ENV[project-src]}/$path" ]]; then
-        source "${BP_ENV[project-src]}/$path"
+		source "${BP_ENV[project-src]}/$path"
     else
-       __FatalError "module '$path' not found."
+		__FatalError "module '$path' not found."
     fi
 }
 
@@ -30,7 +29,15 @@ function msg() {
 	# returns: example
 	local message="$*"
 
-	printf '%b\n' "$message" >&2
+	printf '%b\n' "$message"
+}
+
+function basename() {
+	# usage  : basename "/p/a/t/h"
+	# returns: h
+	local path="${1%/}"
+
+	printf '%s\n' "${path##*/}"
 }
 
 function trim_string() {
@@ -38,25 +45,47 @@ function trim_string() {
 	# returns: example   string
 	: "${1#"${1%%[![:space:]]*}"}"
 	: "${_%"${_##*[![:space:]]}"}"
+
 	printf '%s\n' "$_"
 }
 
-# shellcheck disable=SC2086,SC2048
+function trim_quotes() {
+    # usage: trim_quotes "string"
+    local trim="${1//\'}"
+    printf '%s\n' "${trim//\"}"
+}
+
 function trim_string_all() {
 	# usage  : trim_string_all "   example   string    "
 	# returns: example string
-	local SAVED_OPT_F
+	local -i SET_OPT_F
 
-	[[ $- == *f* ]]; declare -i SAVED_OPT_F=$?
+	[[ $- == *f* ]]; SET_OPT_F=$?
 	set -f
 
 	set -- $*
 	printf '%s\n' "$*"
 
-	(( SAVED_OPT_F == 0 )) && set +f
+	(( SET_OPT_F == 0 )) && set +f
 }
 
-function strip_all() {
+function rstrip() {
+	# usage: rstrip "string" "pattern"
+	local string="$1"
+	local pattern="$2"
+
+	printf '%s\n' "${string%%$pattern}"
+}
+
+function lstrip() {
+	# usage: lstrip "string" "pattern"
+	local string="$1"
+	local pattern="$2"
+
+	printf '%s\n' "${string##$pattern}"
+}
+
+function strip() {
 	# usage: strip_all "string" "pattern"
 	local string="$1"
 	local pattern="$2"
@@ -76,11 +105,9 @@ function split() {
 	# usage: split "string" "delimiter"
 	local string="$1"
 	local delimiter="$2"
-	local old_ifs="$IFS"
 	local -a arr
 
 	IFS=$'\n' read -d "" -ra arr <<< "${string//$delimiter/$'\n'}"
-	IFS="$old_ifs"
 
 	printf '%s\n' "${arr[@]}"
 }
@@ -113,4 +140,34 @@ function pass() {
 	# usage  : pass
 	# returns: status 0
 	return 0
+}
+
+function read_file() {
+	# usage: read_file "file1.txt" "file2.txt"
+	local files="$@"
+	local -i SET_OPT_F
+	local -i _error=1
+	local line
+
+	[[ $- == *f* ]]; SET_OPT_F=$?
+	set -f
+
+	for file in ${files[@]}; {
+		if [[ -f "$file" ]]; then
+			while IFS= read -r line; do
+				printf '%s\n' "$line"
+			done < "$file"
+		elif [[ -d "$file" ]]; then
+			_error=0
+			printf '%s\n' "read_file: $file: Is a directory"
+		else
+			_error=0
+			printf '%s\n' "read_file: $file: No such file or directory"
+		fi
+	}
+
+	(( SET_OPT_F == 0 )) && set +f
+
+	(( _error )) && return 0
+	return 1
 }

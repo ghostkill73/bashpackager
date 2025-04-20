@@ -4,14 +4,13 @@
 #################################################################
 
 function __Message() {
-    local content="$*"
-    printf '%b\n' "$content" >&2
+	local content="$*"
+	printf '%b\n' "$content" >&2
 }
 
-# shellcheck disable=SC2086
 function __FatalError() {
-    local errorMessage="$*"
-    __Message "\e[1;31mfatal error:\e[m $errorMessage"
+	local errorMessage="$*"
+	__Message "\e[1;31mfatal error\e[m: $errorMessage"
 
-    exit $FALSE
+	exit $FALSE
 }

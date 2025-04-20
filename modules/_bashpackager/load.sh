@@ -2,7 +2,6 @@
 #################################################################
 # Load configs and src/main.sh
 #################################################################
-# shellcheck disable=SC1091
 
 function __LoadBashpackager() {
     # loading bashpackager
