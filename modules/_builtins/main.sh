@@ -31,10 +31,8 @@ function msg() {
 	# usage  : msg "example"
 	# returns: example
 	local message="$@"
-	local -i _s="$?"
 
 	printf '%b\n' "$message"
-	return "$_s"
 }
 
 function basename() {
