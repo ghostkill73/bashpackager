@@ -3,7 +3,7 @@
 # Bashpackager
 #################################################################
 
-# checking current bash version
+# Checking current bash version
 case "$BASH_VERSION" in
 	[4-9].*) : ;; # pass
 	*)
@@ -16,17 +16,41 @@ esac
 # Loading bp modules at modules/_bashpackager
 #################################################################
 
-declare -- __bp__modules__path__="$PWD/modules/_bashpackager"
+function __Bashpackager.check() {
+	local path="$PWD/modules"
+	declare -gr __bp__modules__path__="$path/_bashpackager"
 
-# TODO: Add file existence checker
+	if [[ -d "$path" ]]; then
+		[[ -d "$__bp__modules__path__" ]] || {
+			printf '%s\n' "$0: ERROR: $__bp__modules__path__ not found."
+			exit 1
+		}
+	else
+		printf '%s\n' "$0: ERROR: Directory 'module' not found. "
+		printf '%s\n' "Please make sure you are running the bp from the root of the project."
+		exit 1
+	fi
 
-# utils
-source "$__bp__modules__path__/utils.sh"
+}
 
-# configs
-source "$__bp__modules__path__/config.sh"
+function __Bashpackager.source() {
+	if [[ -f "$1" ]]; then
+		source "$1"
+		return 0
+	else
+		printf '%s\n' "$0: ERROR: module $1 not found."
+		exit 1
+	fi
+}
 
-# load
-source "$__bp__modules__path__/load.sh"
+function __Bashpackager.main() {
+	__Bashpackager.check
 
-__LoadBashpackager
+	__Bashpackager.source "$__bp__modules__path__/utils.sh"
+	__Bashpackager.source "$__bp__modules__path__/config.sh"
+	__Bashpackager.source "$__bp__modules__path__/load.sh"
+
+	__LoadBashpackager
+}
+
+__Bashpackager.main

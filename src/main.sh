@@ -16,6 +16,7 @@ try {
 				;;
 			b)
 				msg "$arg is $(strip_all ${OPTARG} X)"
+				comando-invalido-test
 				;;
 			c)
 				msg "$arg is $(trim_string_all ${OPTARG})"
@@ -26,6 +27,6 @@ try {
 		esac
 	done
 } catch {
-	msg "error: $e"
-	msg "status: $s"
+	msg "\e[1;31m[ERROR]\e[m  $e"
+	msg "\e[1;33m[STATUS]\e[m $s"
 }
